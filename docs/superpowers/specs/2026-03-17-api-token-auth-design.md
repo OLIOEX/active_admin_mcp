@@ -31,19 +31,19 @@ Add opt-in API token authentication to the MCP endpoint. Users generate tokens v
 
 ```ruby
 ActiveAdminMcp.configure do |config|
-  config.authentication_enabled = true
+  config.authentication_method = :devise_token
   config.user_class = "User"  # default
 end
 ```
 
-- `authentication_enabled` — defaults to `false` (opt-in). When false, MCP endpoint is open as today.
+- `authentication_method` — defaults to `nil` (no auth, MCP endpoint is open as today). Set to `:devise_token` to enable Bearer token authentication backed by the Devise user model.
 - `user_class` — string name of the Devise model class. Defaults to `"User"`. Used for the `belongs_to` association on `ApiToken`.
 
 ## Authentication Flow
 
 In `McpController`:
 
-1. `before_action :authenticate_mcp_token!` — only runs when `authentication_enabled` is `true`
+1. `before_action :authenticate_mcp_token!` — only runs when `authentication_method` is `:devise_token`
 2. Extracts token from `Authorization: Bearer <token>` header
 3. Looks up `ApiToken` by `token_digest: Digest::SHA256.hexdigest(raw_token)`
 4. **Found:** sets `current_mcp_user` accessor, touches `last_used_at` (throttled — only if nil or older than 5 minutes), proceeds
@@ -65,12 +65,18 @@ This is an ActiveAdmin **Page** (not a Resource), so it will not be discovered b
 
 ## Generator & Migration
 
-Updated `rails generate active_admin_mcp:install` will:
+**Base install** (`rails generate active_admin_mcp:install`):
 
-1. Copy migration to create `mcp_api_tokens` table (with unique index on `token_digest`, index on `user_id`)
-2. Copy initializer template to `config/initializers/active_admin_mcp.rb`
+1. Copy initializer template to `config/initializers/active_admin_mcp.rb` (auth commented out by default)
+2. Print post-install instructions
+
+**With authentication** (`rails generate active_admin_mcp:install --auth`):
+
+1. Everything from base install, plus:
+2. Copy migration to create `mcp_api_tokens` table (with unique index on `token_digest`, index on `user_id`)
 3. Copy ActiveAdmin page template to `app/admin/mcp_api_tokens.rb`
-4. Print post-install instructions
+4. Uncomment `authentication_method = :devise_token` in the initializer
+5. Print auth-specific post-install instructions (run migrations, etc.)
 
 The generator declares `source_root File.expand_path("templates", __dir__)` to resolve template paths.
 
@@ -87,7 +93,8 @@ The generator declares `source_root File.expand_path("templates", __dir__)` to r
 
 - `lib/active_admin_mcp.rb` — configuration module
 - `app/controllers/active_admin_mcp/mcp_controller.rb` — `before_action` auth check with missing-table rescue
-- `lib/generators/active_admin_mcp/install/install_generator.rb` — add `source_root`, copy migration, initializer, admin page
+- `lib/generators/active_admin_mcp/install/install_generator.rb` — add `source_root`, `--auth` flag, conditional migration/admin page copy
+- `README.md` — document authentication setup with `--auth` flag and configuration
 
 ### No new gem dependencies
 

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 ActiveAdmin.register_page "MCP API Tokens" do
-  menu label: "MCP Tokens", parent: "Settings", priority: 100
+  menu label: "MCP Tokens", parent: ActiveAdminMcp.config.menu_parent, priority: 100
 
   content do
-    @tokens = ActiveAdminMcp::ApiToken.where(user: current_admin_user).order(created_at: :desc)
+    @tokens = ActiveAdminMcp::ApiToken.where(user: send(ActiveAdminMcp.config.current_user_method)).order(created_at: :desc)
 
     if flash[:mcp_raw_token]
       panel "New Token Created", class: "mcp-token-created" do
@@ -19,7 +19,7 @@ ActiveAdmin.register_page "MCP API Tokens" do
         column(:created_at) { |t| l(t.created_at, format: :long) }
         column(:last_used_at) { |t| t.last_used_at ? l(t.last_used_at, format: :long) : "Never" }
         column "Actions" do |token|
-          link_to "Revoke", admin_mcp_api_tokens_path(token_id: token.id),
+          link_to "Revoke", admin_mcp_api_tokens_destroy_path(token_id: token.id),
                   method: :delete,
                   data: { confirm: "Revoke token '#{token.name}'?" },
                   class: "button small"
@@ -32,30 +32,28 @@ ActiveAdmin.register_page "MCP API Tokens" do
     end
 
     panel "Create New Token" do
-      active_admin_form_for :mcp_token, url: admin_mcp_api_tokens_path, method: :post do |f|
-        f.inputs do
-          f.input :name, as: :string, label: "Token Name", hint: "A label to identify this token (e.g., 'Claude Code laptop')"
-        end
-        f.actions do
-          f.action :submit, label: "Generate Token"
-        end
+      form action: admin_mcp_api_tokens_create_path, method: :post do
+        input type: :hidden, name: :authenticity_token, value: form_authenticity_token
+        label "Token Name", for: :mcp_token_name
+        input type: :text, name: "mcp_token[name]", id: :mcp_token_name, placeholder: "e.g., Claude Code laptop"
+        input type: :submit, value: "Generate Token"
       end
     end
   end
 
   page_action :create, method: :post do
     token = ActiveAdminMcp::ApiToken.create!(
-      user: current_admin_user,
+      user: send(ActiveAdminMcp.config.current_user_method),
       name: params[:mcp_token][:name].presence || "Unnamed token"
     )
     flash[:mcp_raw_token] = token.raw_token
-    redirect_to admin_mcp_api_tokens_path
+    redirect_to admin_mcp_api_tokens_path()
   end
 
   page_action :destroy, method: :delete do
-    token = ActiveAdminMcp::ApiToken.where(user: current_admin_user).find(params[:token_id])
+    token = ActiveAdminMcp::ApiToken.where(user: send(ActiveAdminMcp.config.current_user_method)).find(params[:token_id])
     token.destroy!
     flash[:notice] = "Token revoked."
-    redirect_to admin_mcp_api_tokens_path
+    redirect_to admin_mcp_api_tokens_path()
   end
 end

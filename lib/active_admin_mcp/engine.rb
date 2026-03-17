@@ -5,8 +5,8 @@ module ActiveAdminMcp
     isolate_namespace ActiveAdminMcp
 
     initializer "active_admin_mcp.mount" do |app|
-      app.routes.append do
-        mount ActiveAdminMcp::Engine => "/mcp"
+      app.routes.prepend do
+        mount ActiveAdminMcp::Engine => ActiveAdminMcp.config.mount_path
       end
     end
   end

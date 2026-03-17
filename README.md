@@ -30,14 +30,27 @@ The MCP server is automatically mounted at `/mcp`.
 To protect your MCP endpoint with API token authentication:
 
 ```bash
-rails generate active_admin_mcp:install --auth
+rails generate active_admin_mcp:install --auth devise_token
 rails db:migrate
 ```
 
 This will:
 - Create the `mcp_api_tokens` table
-- Add an "MCP Tokens" page to your ActiveAdmin panel
+- Add an "MCP Tokens" page to your ActiveAdmin panel (`app/admin/` by default)
 - Enable token authentication in the initializer
+
+#### Generator Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--auth` | none | Authentication method to use (e.g., `devise_token`) |
+| `--admin-path` | `app/admin` | Directory for the ActiveAdmin page file |
+
+Example with a custom admin path:
+
+```bash
+rails generate active_admin_mcp:install --auth devise_token --admin-path app/admin/mcp
+```
 
 ### Managing Tokens
 
@@ -84,6 +97,9 @@ end
 |--------|---------|-------------|
 | `authentication_method` | `nil` | Set to `:devise_token` to enable Bearer token auth |
 | `user_class` | `"User"` | The Devise model class name |
+| `current_user_method` | `:current_admin_user` | Controller method that returns the current user |
+| `menu_parent` | `nil` | Parent menu for the MCP Tokens page (e.g., `"Settings"`) |
+| `mount_path` | `"/mcp"` | Path where the MCP server is mounted |
 
 ## Usage with Claude Code
 

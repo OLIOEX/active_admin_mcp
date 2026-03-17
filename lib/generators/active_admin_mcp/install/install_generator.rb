@@ -10,31 +10,33 @@ module ActiveAdminMcp
 
       source_root File.expand_path("templates", __dir__)
 
-      class_option :auth, type: :boolean, default: false,
-                          desc: "Generate authentication support (migration, admin page, config)"
+      class_option :auth, type: :string, default: nil,
+                          desc: "Authentication method (e.g., devise_token)"
+      class_option :admin_path, type: :string, default: "app/admin",
+                                desc: "Path for ActiveAdmin page file"
 
       def copy_initializer
         template "initializer.rb", "config/initializers/active_admin_mcp.rb"
       end
 
       def copy_migration
-        return unless options[:auth]
+        return unless auth_method
 
         migration_template "migration.rb.erb", "db/migrate/create_mcp_api_tokens.rb"
       end
 
       def copy_admin_page
-        return unless options[:auth]
+        return unless auth_method
 
-        copy_file "mcp_api_tokens.rb", "app/admin/mcp_api_tokens.rb"
+        copy_file "mcp_api_tokens.rb", File.join(options[:admin_path], "mcp_api_tokens.rb")
       end
 
-      def uncomment_auth_config
-        return unless options[:auth]
+      def set_auth_config
+        return unless auth_method
 
         gsub_file "config/initializers/active_admin_mcp.rb",
                   "# config.authentication_method = :devise_token",
-                  "config.authentication_method = :devise_token"
+                  "config.authentication_method = :#{auth_method}"
       end
 
       def show_instructions
@@ -46,8 +48,8 @@ module ActiveAdminMcp
         say "Your MCP server is available at: /mcp"
         say ""
 
-        if options[:auth]
-          say "Authentication enabled! Next steps:", :yellow
+        if auth_method
+          say "Authentication (#{auth_method}) enabled! Next steps:", :yellow
           say ""
           say "  1. Run migrations:"
           say "     rails db:migrate"
@@ -65,13 +67,17 @@ module ActiveAdminMcp
           say "  claude mcp add --transport http #{app_name} http://localhost:3000/mcp/"
           say ""
           say "To add authentication later:"
-          say "  rails generate active_admin_mcp:install --auth"
+          say "  rails generate active_admin_mcp:install --auth devise_token"
         end
 
         say ""
       end
 
       private
+
+      def auth_method
+        options[:auth]
+      end
 
       def app_name
         Rails.application.class.module_parent_name.underscore.dasherize
