@@ -25,6 +25,38 @@ rails generate active_admin_mcp:install
 
 The MCP server is automatically mounted at `/mcp`.
 
+## Route Mounting
+
+By default, the engine prepends its route to the top of your application's route table. This works well for most setups, but can cause issues when your routes use constraints (e.g. hostname-based routing for admin servers), as the prepended mount sits outside any constraint blocks.
+
+The `mount_strategy` option controls how the engine registers its route:
+
+| Strategy | Behaviour |
+|----------|-----------|
+| `:prepend` | **(default)** Mounts at the top of the route table via `routes.prepend` |
+| `:append` | Mounts at the bottom of the route table via `routes.append` |
+| `:none` | Skips automatic mounting — you mount the engine yourself |
+
+### Manual mounting
+
+If your admin routes are wrapped in constraints, set `mount_strategy` to `:none` and mount the engine inside your route file:
+
+```ruby
+# config/initializers/active_admin_mcp.rb
+ActiveAdminMcp.configure do |config|
+  config.mount_path = "/admin/mcp"
+  config.mount_strategy = :none
+end
+```
+
+```ruby
+# config/routes.rb (or a drawn route file)
+constraints AdminConstraint.new do
+  ActiveAdmin.routes(self)
+  mount ActiveAdminMcp::Engine => ActiveAdminMcp.config.mount_path
+end
+```
+
 ## Authentication
 
 To protect your MCP endpoint with API token authentication:
@@ -100,6 +132,7 @@ end
 | `current_user_method` | `:current_admin_user` | Controller method that returns the current user |
 | `menu_parent` | `nil` | Parent menu for the MCP Tokens page (e.g., `"Settings"`) |
 | `mount_path` | `"/mcp"` | Path where the MCP server is mounted |
+| `mount_strategy` | `:prepend` | Route mounting strategy: `:prepend`, `:append`, or `:none` |
 
 ## Usage with Claude Code
 
