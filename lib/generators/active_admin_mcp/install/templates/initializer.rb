@@ -18,4 +18,9 @@ ActiveAdminMcp.configure do |config|
 
   # Path where the MCP server is mounted.
   # config.mount_path = "/mcp"
+
+  # HTTP header used to read the Bearer token from.
+  # Useful when a reverse proxy (e.g. AWS Verified Access) strips the
+  # standard Authorization header.
+  # config.auth_header_name = "Authorization"
 end

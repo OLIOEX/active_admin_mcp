@@ -133,6 +133,34 @@ end
 | `menu_parent` | `nil` | Parent menu for the MCP Tokens page (e.g., `"Settings"`) |
 | `mount_path` | `"/mcp"` | Path where the MCP server is mounted |
 | `mount_strategy` | `:prepend` | Route mounting strategy: `:prepend`, `:append`, or `:none` |
+| `auth_header_name` | `"Authorization"` | HTTP header to read the Bearer token from |
+
+### Custom Auth Header
+
+If your application sits behind a reverse proxy that strips the standard `Authorization` header (e.g. AWS Verified Access), you can configure a custom header name:
+
+```ruby
+ActiveAdminMcp.configure do |config|
+  config.authentication_method = :devise_token
+  config.auth_header_name = "X-MCP-Authorization"
+end
+```
+
+Then pass the token via the custom header in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "type": "http",
+      "url": "https://admin.example.com/admin/mcp/",
+      "headers": {
+        "X-MCP-Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
 
 ## Usage with Claude Code
 

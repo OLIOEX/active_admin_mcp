@@ -4,7 +4,8 @@ module ActiveAdminMcp
   class Configuration
     MOUNT_STRATEGIES = %i[prepend append none].freeze
 
-    attr_accessor :authentication_method, :user_class, :current_user_method, :menu_parent, :mount_path
+    attr_accessor :authentication_method, :user_class, :current_user_method, :menu_parent, :mount_path,
+                  :auth_header_name
 
     attr_reader :mount_strategy
 
@@ -15,6 +16,7 @@ module ActiveAdminMcp
       @menu_parent = nil
       @mount_path = "/mcp"
       @mount_strategy = :prepend
+      @auth_header_name = "Authorization"
     end
 
     def mount_strategy=(strategy)

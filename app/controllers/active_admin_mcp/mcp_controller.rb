@@ -40,7 +40,7 @@ module ActiveAdminMcp
     end
 
     def extract_bearer_token
-      header = request.headers["Authorization"]
+      header = request.headers[ActiveAdminMcp.config.auth_header_name]
       return nil unless header&.start_with?("Bearer ")
 
       header.delete_prefix("Bearer ")
