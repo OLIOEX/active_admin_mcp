@@ -2,7 +2,11 @@
 
 module ActiveAdminMcp
   class Configuration
+    MOUNT_STRATEGIES = %i[prepend append none].freeze
+
     attr_accessor :authentication_method, :user_class, :current_user_method, :menu_parent, :mount_path
+
+    attr_reader :mount_strategy
 
     def initialize
       @authentication_method = nil
@@ -10,6 +14,15 @@ module ActiveAdminMcp
       @current_user_method = :current_admin_user
       @menu_parent = nil
       @mount_path = "/mcp"
+      @mount_strategy = :prepend
+    end
+
+    def mount_strategy=(strategy)
+      unless MOUNT_STRATEGIES.include?(strategy)
+        raise ArgumentError, "Invalid mount strategy: #{strategy}. Must be one of: #{MOUNT_STRATEGIES.join(', ')}"
+      end
+
+      @mount_strategy = strategy
     end
 
     def authentication_enabled?
